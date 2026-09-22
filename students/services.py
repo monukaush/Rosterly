@@ -14,7 +14,7 @@ class StudentService:
         """
         students = Student.objects.all()
 
-        # Step 17: Filtering
+        
         if department:
             students = students.filter(department__iexact=department)
 
@@ -24,7 +24,7 @@ class StudentService:
         if year is not None:
             students = students.filter(year=year)
 
-        # Step 18: Search
+        
         if search:
             students = students.filter(
                 Q(first_name__icontains=search) |

@@ -25,20 +25,17 @@ class StudentDetailAPITests(APITestCase):
         self.not_found_url = reverse('student-detail', kwargs={'id': 99999})
 
     def test_get_student_by_id_success(self):
-        """Test GET /api/students/<id>/ returns 200 and student details."""
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['first_name'], "Rahul")
         self.assertEqual(response.data['email'], "rahul@example.com")
 
     def test_get_student_by_id_not_found(self):
-        """Test GET /api/students/<id>/ returns 404 if student does not exist."""
         response = self.client.get(self.not_found_url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('error', response.data)
 
     def test_put_update_student_success(self):
-        """Test PUT /api/students/<id>/ completely updates student record."""
         payload = {
             "first_name": "Rahul",
             "last_name": "Sharma",
@@ -60,16 +57,13 @@ class StudentDetailAPITests(APITestCase):
         self.assertEqual(self.student.department, "IT")
 
     def test_put_update_student_validation_failure(self):
-        """Test PUT /api/students/<id>/ returns 400 when required fields are missing."""
         payload = {
             "first_name": "Rahul"
-            # Missing other required fields
         }
         response = self.client.put(self.detail_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_patch_partial_update_student_success(self):
-        """Test PATCH /api/students/<id>/ partially updates student fields."""
         payload = {
             "phone": "9999988888",
             "address": "Gurugram, India"
@@ -79,17 +73,14 @@ class StudentDetailAPITests(APITestCase):
         self.student.refresh_from_db()
         self.assertEqual(self.student.phone, "9999988888")
         self.assertEqual(self.student.address, "Gurugram, India")
-        # Ensure other fields remain unchanged
         self.assertEqual(self.student.first_name, "Rahul")
 
     def test_delete_student_success(self):
-        """Test DELETE /api/students/<id>/ removes student and returns 204."""
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Student.objects.filter(id=self.student.id).exists())
 
     def test_delete_student_not_found(self):
-        """Test DELETE /api/students/<id>/ returns 404 if student does not exist."""
         response = self.client.delete(self.not_found_url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -156,10 +147,7 @@ class StudentFilteringAndSearchAPITests(APITestCase):
             return response.data['results']
         return response.data
 
-    # --- Step 17: Filtering Tests ---
-
     def test_filter_by_department(self):
-        """Test GET /api/students/?department=CSE returns only CSE students."""
         response = self.client.get(self.list_url, {'department': 'CSE'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -169,7 +157,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertIn("STU1003", ids)
 
     def test_filter_by_year(self):
-        """Test GET /api/students/?year=4 returns 4th-year students."""
         response = self.client.get(self.list_url, {'year': 4})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -179,7 +166,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertIn("STU1004", ids)
 
     def test_filter_by_course(self):
-        """Test GET /api/students/?course=MCA returns only MCA students."""
         response = self.client.get(self.list_url, {'course': 'MCA'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -187,7 +173,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['student_id'], "STU1003")
 
     def test_filter_combined_department_and_year(self):
-        """Test GET /api/students/?department=CSE&year=4 returns Rahul only."""
         response = self.client.get(self.list_url, {'department': 'CSE', 'year': 4})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -195,15 +180,11 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['student_id'], "STU1001")
 
     def test_filter_invalid_year_returns_400(self):
-        """Test GET /api/students/?year=abc returns 400 Bad Request."""
         response = self.client.get(self.list_url, {'year': 'abc'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('error', response.data)
 
-    # --- Step 18: Search Tests ---
-
     def test_search_by_first_name(self):
-        """Test GET /api/students/?search=Rahul returns Rahul Sharma."""
         response = self.client.get(self.list_url, {'search': 'Rahul'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -211,7 +192,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['first_name'], "Rahul")
 
     def test_search_by_last_name(self):
-        """Test GET /api/students/?search=Singh returns Neha Singh."""
         response = self.client.get(self.list_url, {'search': 'Singh'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -219,7 +199,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['last_name'], "Singh")
 
     def test_search_by_email(self):
-        """Test GET /api/students/?search=priya.patel returns Priya."""
         response = self.client.get(self.list_url, {'search': 'priya.patel'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -227,7 +206,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['student_id'], "STU1002")
 
     def test_search_by_student_id(self):
-        """Test GET /api/students/?search=STU1003 returns Amit Verma."""
         response = self.client.get(self.list_url, {'search': 'STU1003'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -235,7 +213,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['first_name'], "Amit")
 
     def test_search_case_insensitive(self):
-        """Test GET /api/students/?search=rahul matches case-insensitively."""
         response = self.client.get(self.list_url, {'search': 'rahul'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -243,7 +220,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['first_name'], "Rahul")
 
     def test_search_and_filter_combined(self):
-        """Test combining ?search=Verma&department=CSE returns Amit Verma."""
         response = self.client.get(self.list_url, {'search': 'Verma', 'department': 'CSE'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -251,16 +227,12 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(results[0]['student_id'], "STU1003")
 
     def test_search_no_match_returns_empty_list(self):
-        """Test searching for non-existent student returns empty list."""
         response = self.client.get(self.list_url, {'search': 'NonExistentPerson'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
         self.assertEqual(len(results), 0)
 
-    # --- Step 19: Ordering / Sorting Tests ---
-
     def test_ordering_by_age_ascending(self):
-        """Test GET /api/students/?ordering=age sorts lowest age to highest age."""
         response = self.client.get(self.list_url, {'ordering': 'age'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -270,7 +242,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(ages[-1], 23)
 
     def test_ordering_by_age_descending(self):
-        """Test GET /api/students/?ordering=-age sorts highest age to lowest age."""
         response = self.client.get(self.list_url, {'ordering': '-age'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -280,7 +251,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(ages[-1], 21)
 
     def test_ordering_by_first_name_ascending(self):
-        """Test GET /api/students/?ordering=first_name sorts A to Z."""
         response = self.client.get(self.list_url, {'ordering': 'first_name'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -289,7 +259,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(names[0], "Amit")
 
     def test_ordering_by_first_name_descending(self):
-        """Test GET /api/students/?ordering=-first_name sorts Z to A."""
         response = self.client.get(self.list_url, {'ordering': '-first_name'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         results = self.get_results(response)
@@ -297,10 +266,7 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(names, sorted(names, reverse=True))
         self.assertEqual(names[0], "Rahul")
 
-    # --- Step 20: Pagination Tests ---
-
     def test_pagination_page_1(self):
-        """Test GET /api/students/?page=1 returns first page with count and results."""
         response = self.client.get(self.list_url, {'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('count', response.data)
@@ -311,7 +277,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertEqual(len(response.data['results']), 4)
 
     def test_pagination_custom_page_size(self):
-        """Test GET /api/students/?page=1&page_size=2 returns only 2 records and next link."""
         response = self.client.get(self.list_url, {'page': 1, 'page_size': 2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 4)
@@ -319,7 +284,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertIsNotNone(response.data['next'])
 
     def test_pagination_page_2_with_page_size(self):
-        """Test GET /api/students/?page=2&page_size=2 returns next 2 records and previous link."""
         response = self.client.get(self.list_url, {'page': 2, 'page_size': 2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 4)
@@ -327,7 +291,6 @@ class StudentFilteringAndSearchAPITests(APITestCase):
         self.assertIsNotNone(response.data['previous'])
 
     def test_pagination_invalid_page_returns_404(self):
-        """Test GET /api/students/?page=999 returns 404 Not Found."""
         response = self.client.get(self.list_url, {'page': 999})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -356,57 +319,48 @@ class StudentValidationAPITests(APITestCase):
         return response.data
 
     def test_negative_age_rejected(self):
-        """Test Age = -5 is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "age": -5}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('age', self.get_errors(response))
 
     def test_excessive_age_rejected(self):
-        """Test Age = 150 is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "age": 150}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('age', self.get_errors(response))
 
     def test_year_above_maximum_rejected(self):
-        """Test Year = 10 is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "year": 10}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('year', self.get_errors(response))
 
     def test_year_zero_rejected(self):
-        """Test Year = 0 is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "year": 0}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('year', self.get_errors(response))
 
     def test_invalid_email_format_rejected(self):
-        """Test invalid email format is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "email": "invalid-email-address"}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', self.get_errors(response))
 
     def test_invalid_phone_number_rejected(self):
-        """Test invalid short phone number is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "phone": "123"}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('phone', self.get_errors(response))
 
     def test_future_date_of_birth_rejected(self):
-        """Test date of birth in future is rejected with 400 Bad Request."""
         payload = {**self.valid_payload, "date_of_birth": "2099-01-01"}
         response = self.client.post(self.list_url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('date_of_birth', self.get_errors(response))
 
-
     def test_valid_student_data_accepted(self):
-        """Test valid student data succeeds with 201 Created."""
         response = self.client.post(self.list_url, data=self.valid_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['first_name'], "Aakash")
@@ -414,10 +368,6 @@ class StudentValidationAPITests(APITestCase):
 
 
 class StudentServiceUnitTests(APITestCase):
-    """
-    Direct unit tests for the StudentService class, validating the service layer
-    isolated from the HTTP layer.
-    """
 
     def setUp(self):
         self.service = StudentService()
@@ -477,6 +427,3 @@ class StudentServiceUnitTests(APITestCase):
         results = self.service.list_students(department="ECE")
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.first().student_id, "SVC001")
-
-
-
